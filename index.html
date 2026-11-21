@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MySQL Demo — Ismlar ro‘yxati</title>
+  <style>
+    *{box-sizing:border-box} body{margin:0;font-family:Arial,sans-serif;background:#f3f6fb;color:#172033}
+    main{max-width:680px;margin:48px auto;padding:24px}
+    .card{background:#fff;border-radius:18px;padding:28px;box-shadow:0 8px 30px #18294a12}
+    h1{margin:0 0 8px;font-size:28px} p{color:#64748b;line-height:1.5}
+    form{display:flex;gap:10px;margin:22px 0} input{flex:1;min-width:0;padding:14px;border:1px solid #cbd5e1;border-radius:10px;font-size:16px}
+    button{padding:14px 20px;border:0;border-radius:10px;background:#315ee8;color:#fff;font-weight:700;font-size:15px}
+    button:disabled{opacity:.6} #status{min-height:24px;font-size:14px;color:#475569}
+    ul{list-style:none;padding:0;margin:12px 0 0} li{padding:13px 4px;border-bottom:1px solid #e8edf5;display:flex;justify-content:space-between;gap:12px}
+    time{color:#94a3b8;font-size:12px;white-space:nowrap}
+    @media(max-width:520px){main{margin:12px auto;padding:12px}.card{padding:20px}form{flex-direction:column}button{width:100%}}
+  </style>
+</head>
+<body>
+<main><section class="card">
+  <h1>Ismlar ro‘yxati</h1>
+  <p>Ismingizni kiriting va saqlang. Ma’lumot MySQL bazasiga yoziladi.</p>
+  <form id="form"><input id="name" maxlength="100" placeholder="Ismingizni kiriting" required><button id="save" type="submit">Saqlash</button></form>
+  <div id="status" role="status">Ma’lumotlar yuklanmoqda…</div>
+  <h2>Saqlangan ismlar</h2><ul id="notes"></ul>
+</section></main>
+<script>
+const api='/.netlify/functions/api';
+const list=document.getElementById('notes'), statusEl=document.getElementById('status');
+function show(items){list.replaceChildren();if(!items.length){const li=document.createElement('li');li.textContent='Hozircha ma’lumot yo‘q.';list.append(li);return;}
+  for(const item of items){const li=document.createElement('li');const name=document.createElement('strong');name.textContent=item.name;const date=document.createElement('time');date.textContent=item.created_at?new Date(item.created_at).toLocaleString('uz-UZ'):'';li.append(name,date);list.append(li);}}
+async function load(){try{const r=await fetch(api);const data=await r.json();if(!r.ok)throw new Error(data.error||'Server xatosi');show(data);statusEl.textContent='Baza bilan aloqa ishlayapti.';}catch(e){statusEl.textContent='Ulanishda xato: '+e.message;}}
+document.getElementById('form').addEventListener('submit',async e=>{e.preventDefault();const input=document.getElementById('name'),button=document.getElementById('save');const name=input.value.trim();if(!name)return;button.disabled=true;statusEl.textContent='Saqlanmoqda…';try{const r=await fetch(api,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})});const data=await r.json();if(!r.ok)throw new Error(data.error||'Saqlashda xato');input.value='';statusEl.textContent='Ism muvaffaqiyatli saqlandi.';await load();}catch(err){statusEl.textContent='Xato: '+err.message;}finally{button.disabled=false;}});
+load();
+</script>
+</body></html>
